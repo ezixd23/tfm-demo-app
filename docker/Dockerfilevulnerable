@@ -1,0 +1,22 @@
+# ===============================================================
+# Dockerfilevulnerable - Vulnerable Version
+# Old base image with multiple critical
+# and known high-level vulnerabilities. Deliberately used to demonstrate
+# that the CI pipeline correctly blocks insecure
+# images.
+
+# =============================================================
+
+FROM python:3.4-alpine
+
+WORKDIR /app
+
+COPY app/requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY app/app.py /app/
+
+EXPOSE 8080
+
+CMD ["python", "/app/app.py"]
