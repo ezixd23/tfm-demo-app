@@ -95,6 +95,7 @@ jobs:
       - name: Vulnerability scan with Grype
         run: |
           docker run --rm \
+            -e GRYPE_DB_AUTO_UPDATE=true \
             -v "$PWD":/work \
             anchore/grype:v0.79.6 \
             sbom:/work/sbom.syft.json \
