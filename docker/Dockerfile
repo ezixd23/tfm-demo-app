@@ -6,7 +6,7 @@
 # ===========================================================
 
 # Stage 1: builder
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /build
 
@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir --user --upgrade pip && \
     pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: runtime
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Create non-root user (defense in depth - consistent with policy P1)
 RUN groupadd -r -g 10001 appuser && \
