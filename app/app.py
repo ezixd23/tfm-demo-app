@@ -17,7 +17,8 @@ def root():
         "service": "tfm-demo-app",
         "version": VERSION,
         "hostname": socket.gethostname(),
-        "status": "ok"
+        "status": "ok",
+	"ci_pipeline": "end-to-end-test"
     })
 
 

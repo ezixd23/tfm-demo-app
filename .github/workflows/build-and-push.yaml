@@ -112,9 +112,69 @@ jobs:
           tags: ${{ steps.vars.outputs.FULL_IMAGE }}
           push: true
 
-      # ----- Summary -----
-      - name: Summary
+      # ----- Checkou GtiOps repository -----
+      - name: Checkout GitOps repository
+        if: success()
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+        with:
+          repository: ezixd23/tfm-gitops
+          token: ${{ secrets.GITOPS_PAT }}
+          path: gitops-repo
+          ref: main
+
+      # ----- yq installation -----
+      - name: Install yq
         if: success()
         run: |
-          echo "Image successfully built, scanned and pushed:"
-          echo "${{ steps.vars.outputs.FULL_IMAGE }}"
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
+      # ----- Update image tag in GitOps repo -----
+      - name: Update image tag in GitOps repo
+        if: success()
+        run: |
+          cd gitops-repo
+          
+          DEPLOYMENT_FILE="applications/demo-app/deployment.yaml"
+          NEW_IMAGE="${{ steps.vars.outputs.FULL_IMAGE }}"
+          
+          echo "Updating ${DEPLOYMENT_FILE} to use ${NEW_IMAGE}"
+          
+          yq eval -i ".spec.template.spec.containers[0].image = \"${NEW_IMAGE}\"" "${DEPLOYMENT_FILE}"
+          
+          echo "New deployment content (image line):"
+          grep "image:" "${DEPLOYMENT_FILE}"
+
+      # ----- Commit and push to GitOps repo -----
+      - name: Commit and push to GitOps repo
+        if: success()
+        run: |
+          cd gitops-repo
+          
+          git config user.name "GitHub Actions CI"
+          git config user.email "actions@github.com"
+          
+          if git diff --quiet applications/demo-app/deployment.yaml; then
+            echo "No changes to commit (image tag already up to date)"
+            exit 0
+          fi
+          
+          git add applications/demo-app/deployment.yaml
+          git commit -m "chore: update demo-app image to ${{ steps.vars.outputs.SHORT_SHA }}
+
+          Automated commit from tfm-demo-app CI pipeline.
+          Source commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}"
+          
+          git push origin main
+
+      # ----- Summary -----
+      - name: Final summary
+        if: success()
+        run: |
+          echo "=== CI Pipeline completed successfully ==="
+          echo "Image: ${{ steps.vars.outputs.FULL_IMAGE }}"
+          echo "GitOps repo updated. ArgoCD will sync automatically."
+          echo "Check ArgoCD UI for sync status."
