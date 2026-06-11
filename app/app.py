@@ -18,7 +18,8 @@ def root():
         "version": VERSION,
         "hostname": socket.gethostname(),
         "status": "ok",
-	"ci_pipeline": "end-to-end-test"
+	"ci_pipeline": "end-to-end-test",
+	"defensa": "TFM-2026"
     })
 
 
